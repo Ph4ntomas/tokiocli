@@ -4,14 +4,23 @@ use tokiocli::{Action, Cli};
 async fn main() -> eyre::Result<()> {
     let mut cli = Cli::new()?;
     let mut exit = false;
+    let mut discard = false;
 
     while !exit {
-        let action = cli.getaction().await?;
-        match action {
-            Action::Command(cmd) => runcmd(cmd, &mut exit),
-            Action::AutoComplete(cmd) => autocomplete(&mut cli, cmd)?,
-            Action::NoAction => exit = true,
-        };
+        if discard {
+            cli.discard();
+            discard = false;
+        }
+        tokio::select! {
+            _ = tokio::signal::ctrl_c() => { discard = true }
+            action = cli.getaction() => {
+                match action? {
+                    Action::Command(cmd) => runcmd(cmd, &mut exit),
+                    Action::AutoComplete(cmd) => autocomplete(&mut cli, cmd)?,
+                    Action::NoAction => exit = true,
+                }
+            }
+        }
     }
 
     Ok(())

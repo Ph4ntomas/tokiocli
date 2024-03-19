@@ -291,6 +291,17 @@ impl Cli {
     }
 
     /**
+     * Discard current input.
+     *
+     * This function print a new line, and reset the command internal buffer.
+     * This can be used to flush the cli upon receiving a ctrl+c.
+     */
+    pub fn discard(&mut self) {
+        eprintln!();
+        self.do_reset = true;
+    }
+
+    /**
      * Return an Action demanded by the user in CLI.
      */
     pub async fn getaction(&mut self) -> Result<Action> {
